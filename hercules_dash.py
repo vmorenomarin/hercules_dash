@@ -1,8 +1,9 @@
-
 import pandas as pd
 
 path_report_oi = "./reports/oferta_individual.xlsx"
 path_portafolio = "./reports/portafolio.xlsx"
+path_past_portafolio = "./reports/past_portafolio.xlsx"
+
 
 #Lista de campos que se usarán del reporte estadístico de Hércules.
 fields_report = [
@@ -47,9 +48,6 @@ fields_report = [
 dataset=pd.read_excel(path_report_oi, usecols=fields_report)
 
 
-dataset.info()
-
-
 # Se eliminan todos los registros donde no haya un valor en la sede o en la fecha de reserva.
 dash_dataset = dataset.dropna(subset=["Sedes", "Fecha Inicio del Servicio"])
 print(
@@ -60,8 +58,8 @@ print(
 dash_dataset.insert(loc=len(dash_dataset.columns), column="Tipo de Oferta", value="")
 
 # Eliminación del prefijo "-F" en los código SAP (campo "Id Material") de la oferta FOSFEC.
-dataset["Id Material"].replace(r"(\d{8})-F", r"\g<1>", inplace=True, regex=True)
-dataset["Id Material"] = pd.to_numeric(dataset["Id Material"])
+dash_dataset["Id Material"].replace(r"(\d{8})-F", r"\g<1>", inplace=True, regex=True)
+dash_dataset["Id Material"] = pd.to_numeric(dash_dataset["Id Material"])
 
 
 # Patrones empleados en el campo "Motivo de cambio" usando RegEx y con ello asignar las ofertas por Excedentes del 55% y cobro a empresas por una venta individual.
@@ -85,49 +83,56 @@ dash_dataset.loc[(dash_dataset["Ciclos"].str.contains(pat_exc55, case=False, reg
 dash_dataset.loc[(dash_dataset["Canal de Pago"].notna()) & (dash_dataset["Motivo de Cambio"].isna()), "Tipo de Oferta"] = "Venta Directa"
 
 
+# Lista de campos del portafolio que se usarán para cruzar con el reporte estadístico.
 fields_portafolio = [
     "UNIDAD DE NEGOCIO",
     "LINEA",
     "CODIGO SAP",
     "MATERIAL",
-    "NUM. PARTICIPANTES MIN",
     "NUM. PARTICIPANTES MAX",
 ]
 
 
-# Lista de campos del portafolio que se usarán para cruzar con el reporte estadístico.
+# última versión del portafolio.
 portafolio = pd.read_excel(path_portafolio, usecols=fields_portafolio)
 
-# Elimina las fila donde se encuentre el repetido el código SAP.
-portafolio.drop_duplicates("CODIGO SAP", inplace=True, keep="first")
+# Archivo que contiene materiales pasados que no están en la última actualización del portafolio.
+past_portafolio = pd.read_excel(path_past_portafolio, usecols=fields_portafolio)
+
+full_portafolio=pd.concat([portafolio, past_portafolio])
+
 
 # Selecciona del portafolio sólo las filas donde la unidad de negocio coincida con las indicacadas en la lista "UNIDADES DE NEGOCIO", pues son las unidades que ofertan servicios en Hércules.
 UNIDADES_NEGOCIO = ["EDUCACIÓN", "CULTURA", "ESPARCIMIENTO", "DESARROLLO SOCIAL"]
-portafolio_hercules = portafolio[
-    portafolio["UNIDAD DE NEGOCIO"].isin(UNIDADES_NEGOCIO)
+portafolio_hercules = full_portafolio[
+     full_portafolio["UNIDAD DE NEGOCIO"].isin(UNIDADES_NEGOCIO)
 ]
 
+# Elimina las fila donde se encuentre el repetido el código SAP.
+portafolio_hercules.drop_duplicates("CODIGO SAP", inplace=True, keep="first")
+
+
+portafolio_hercules.to_csv("full.csv", index=False, index_label=False)
 
 
 # Se ejecuta un left-join trayendo los campos de portafolio cruzados a través del Código SAP.
-dash_dataset = pd.merge(
+final_dataset = pd.merge(
     dash_dataset,
     portafolio_hercules[
         [
             "UNIDAD DE NEGOCIO",
             "LINEA",
-            "MATERIAL",
             "CODIGO SAP",
-            "NUM. PARTICIPANTES MIN",
             "NUM. PARTICIPANTES MAX",
         ]
     ],
     left_on="Id Material",
     right_on="CODIGO SAP",
     how="left",
+    # validate="1:m"
+    
 )
 
+final_dataset.to_csv("dash_dataset.csv", index = False, index_label=False)
 
 
-dash_dataset.to_excel("dash_dataset_merged.xlsx", index = False, index_label=False)
-# portafolio_hercules.to_excel("portafolio_hercules.xlsx", index=False, index_label=False)
