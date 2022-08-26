@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Mitr');
+
+body {
+    font-family: 'Mitr', sans-serif;
+}
+
+h1,
+h2,
+h3 {
+    color: #c0d507;
+}
+
+h4,
+h5,
+h6 {
+    color: #005644;
+}
+
+p {
+    color: #202124
+}
