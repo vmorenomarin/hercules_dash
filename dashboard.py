@@ -6,6 +6,11 @@ from dash.dependencies import Output, Input
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
+# Importing UI components
+
+from components import navbar
+
+navbar = navbar.navbar
 
 df = pd.read_csv("./assets/data/dash_dataset.csv")
 
@@ -30,54 +35,7 @@ app = dash.Dash(
 
 # Layout section, In this part, add the html code and plotty Dash componentss associated to the dataset variables.
 
-
-# Vriable style:
-# comfe_colors = {'green1':'#005644', 'green2':'#c0d507'}
-# comfe_fonts = ['font-family: 'Mitr';font-size: 22px;', 2]
-
-navbar = dbc.Row(
-    dbc.Navbar(
-        dbc.Container(
-            [
-                html.A(
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                html.Img(
-                                    src="https://www.matriculascomfenalcoantioquia.com.co/uploads/9235be6bd26cede21ecad29db3bfad3833ca12af.png",
-                                    height="30px",
-                                ),
-                            ),
-                            dbc.Col(
-                                dbc.NavbarBrand(
-                                    "Tablero Hércules",
-                                    class_name="ms-2",
-                                    style={"color": "#c0d507"},
-                                ),
-                            ),
-                        ]
-                    ),
-                    href="#",
-                    style={"text-decoration": "none"},
-                ),
-                dbc.DropdownMenu(
-                    children=[
-                        dbc.DropdownMenuItem("Seleccione tipo de oferta", header=True),
-                        dbc.DropdownMenuItem("Venta Directa", href="#"),
-                        dbc.DropdownMenuItem("FOSFEC", href="#"),
-                        dbc.DropdownMenuItem("Excedentes del 55%", href="#"),
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("Devoluciones", href="#"),
-                    ],
-                    nav=True,
-                    toggle_style=True,
-                    label="Tipo de Oferta",
-                ),
-            ],
-        ), class_name="border border-0"
-    ),
-    
-)
+total_offer=df["Documento"].shape[0]
 
 app.layout = dbc.Container(
     [
@@ -85,13 +43,32 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(
-                    [html.Div(html.P("Ejemplo"))],
-                    # style={"background-color": "red"},
-                    class_name="border border-1 rounded mx-4 shadow",
+                    [
+                        html.Div(
+                            dbc.Card(
+                                [
+                                    dbc.CardHeader("Total"),
+                                    dbc.CardBody(
+                                       children=[total_offer], id="total_card"
+                                    ),
+                                ],
+                                style={'width': '300px'},
+                            )
+                        ),
+                        dcc.Dropdown(
+                            options=[
+                                offer_type
+                                for offer_type in df["Tipo de Oferta"].unique()
+                            ],
+                            id="dropdown_offer",
+                            value=None,
+                            placeholder="Seleccione una o más",
+                            style={'width': '300px'},
+                        ),
+                    ]
                 ),
                 dbc.Col(
                     [html.Div(html.P("Ejemplo"))],
-                    # style={"background-color": "#202124"},
                     class_name="border border-1 rounded mx-4 shadow",
                 ),
             ],
@@ -99,6 +76,15 @@ app.layout = dbc.Container(
         ),
     ],
 )
+
+
+@app.callback(Output("total_card", "children"), Input("dropdown_offer", "value"))
+def update_card(value):
+    
+    total_offer = df[df["Tipo de Oferta"] == value].shape[0]
+
+    return total_offer
+
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=3000)
