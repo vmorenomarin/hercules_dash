@@ -1,3 +1,5 @@
+from stat import FILE_ATTRIBUTE_DIRECTORY
+from typing import IO
 import pandas as pd
 
 import dash
@@ -34,9 +36,8 @@ app = dash.Dash(
 )
 
 # Layout section, In this part, add the html code and plotty Dash componentss associated to the dataset variables.
-
-total_offer=df["Documento"].shape[0]
-
+# total_offer = df['Documento'].shape[0]
+title_card = "Total matrículas"
 app.layout = dbc.Container(
     [
         navbar,
@@ -47,44 +48,68 @@ app.layout = dbc.Container(
                         html.Div(
                             dbc.Card(
                                 [
-                                    dbc.CardHeader("Total"),
+                                    dbc.CardHeader(
+                                        children=title_card,
+                                        id="card_header",
+                                        className="fw-bold",
+                                    ),
                                     dbc.CardBody(
-                                       children=[total_offer], id="total_card"
+                                        children=df["Documento"].shape[0],
+                                        id="total_card",
                                     ),
                                 ],
-                                style={'width': '300px'},
-                            )
+                                style={"width": "260px"},
+                            ),
                         ),
                         dcc.Dropdown(
                             options=[
-                                offer_type
+                                {"label": offer_type, "value": offer_type}
                                 for offer_type in df["Tipo de Oferta"].unique()
                             ],
                             id="dropdown_offer",
-                            value=None,
-                            placeholder="Seleccione una o más",
-                            style={'width': '300px'},
+                            value="Total Matrículas",
+                            placeholder="Seleccione oferta...",
+                            style={"width": "260px"},
+                            # className='',
                         ),
-                    ]
+                    ],
                 ),
                 dbc.Col(
-                    [html.Div(html.P("Ejemplo"))],
-                    class_name="border border-1 rounded mx-4 shadow",
+                    [dcc.Graph(id="enroll-evolution", figure={})],
+                    class_name="border border-1 rounded shadow",
                 ),
             ],
-            class_name="py-3",
+            class_name="my-3",
+            justify="evenly",
         ),
     ],
+    # fluid=True,
 )
 
 
-@app.callback(Output("total_card", "children"), Input("dropdown_offer", "value"))
+@app.callback(
+    [Output("total_card", "children"), Output("card_header", "children")],
+    Input("dropdown_offer", "value"),
+)
 def update_card(value):
-    
-    total_offer = df[df["Tipo de Oferta"] == value].shape[0]
+    children = df[df["Tipo de Oferta"] == value].shape[0]
+    title_card = value
+    if value is None:
+        children = df["Documento"].shape[0]
+        title_card = "Total Matrículas"
+        return children, title_card
 
-    return total_offer
+    return children, title_card
 
+
+@app.callback(
+    Output("enroll-evolution", 'figure'),
+    Input("dropdown_offer", "value")
+)
+def update_graph(value):
+    dff=df[["Fecha Registro", "Tipo de Oferta"]]
+    figure_line = px.line(dff[dff.isin([value])], x=dff["Fecha Registro"], y="Tipo de Oferta")
+    return figure_line
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=3000)
