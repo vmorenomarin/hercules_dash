@@ -1,7 +1,6 @@
 import pandas as pd
-import re
 
-
+# Rutas de los reportes estadísticos. Importante actualizar estas líneas si se cambian de ubicación.
 path_report_oi = "./reports/oferta_individual.xlsx"
 path_portafolio = "./reports/portafolio.xlsx"
 path_past_portafolio = "./reports/past_portafolio.xlsx"
@@ -105,7 +104,8 @@ dash_dataset["Mes Registro"] = pd.to_datetime(dash_dataset["Fecha Registro"]).dt
 dash_dataset["Año Registro"] = pd.to_datetime(dash_dataset["Fecha Registro"]).dt.year
 
 
-# Lista de campos del portafolio que se usarán para cruzar con el reporte estadístico.
+# Lista de campos del portafolio que se usarán para cruzar con el reporte
+# estadístico.
 fields_portafolio = [
     "UNIDAD DE NEGOCIO",
     "LINEA",
@@ -118,12 +118,15 @@ fields_portafolio = [
 # última versión del portafolio.
 portafolio = pd.read_excel(path_portafolio, usecols=fields_portafolio)
 
-# Archivo que contiene materiales pasados que no están en la última actualización del portafolio.
+# Archivo que contiene materiales pasados que no están en la última
+# actualización del portafolio.
 past_portafolio = pd.read_excel(path_past_portafolio, usecols=fields_portafolio)
 
 full_portafolio = pd.concat([portafolio, past_portafolio])
 
-# Selecciona del portafolio sólo las filas donde la unidad de negocio coincida con las indicacadas en la lista 'UNIDADES DE NEGOCIO', pues son las unidades que ofertan servicios en Hércules.
+# Selecciona del portafolio sólo las filas donde la unidad de negocio coincida
+# con las indicacadas en la lista 'UNIDADES DE NEGOCIO', pues son las unidades
+# que ofertan servicios en Hércules.
 UNIDADES_NEGOCIO = ["EDUCACIÓN", "CULTURA", "ESPARCIMIENTO", "DESARROLLO SOCIAL"]
 portafolio_hercules = full_portafolio[
     full_portafolio["UNIDAD DE NEGOCIO"].isin(UNIDADES_NEGOCIO)

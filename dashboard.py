@@ -1,5 +1,3 @@
-from stat import FILE_ATTRIBUTE_DIRECTORY
-from typing import IO
 import pandas as pd
 
 import dash
