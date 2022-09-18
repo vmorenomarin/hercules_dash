@@ -73,11 +73,6 @@ app.layout = dbc.Container(
                             placeholder="Seleccione unidad de negocio...",
                         ),
                         dcc.Dropdown(
-                            options=[],
-                            id="dropdown_offer_types",
-                            placeholder="Seleccione tipo oferta...",
-                        ),
-                        dcc.Dropdown(
                             options=[
                                 {"label": area,
                                  "value": area}
@@ -94,7 +89,11 @@ app.layout = dbc.Container(
                             ],
                             id="dropdown_services",
                             placeholder="Seleccione material...",
-                            clearable=False
+                        ),
+                        dcc.Dropdown(
+                            options=[],
+                            id="dropdown_offer_types",
+                            placeholder="Seleccione tipo oferta...",
                         ),
                     ], class_name='col-4'
                 ),
@@ -128,13 +127,13 @@ def update_card(value):
 
 @app.callback(
     Output("dropdown_offer_types", "options"),
-    Input("dropdown_business_unities", "value")
+    Input("dropdown_services", "value")
 )
-def update_dropdown_offer_types(business_unity):
+def update_dropdown_offer_types(service):
     options = [
         {"label": type_offer,
          "value": type_offer}
-        for type_offer in get_offer_types(business_unity=business_unity)
+        for type_offer in get_offer_types(service=service)
     ]
     return options
 
@@ -170,13 +169,45 @@ def update_dropdown_services(value):
     Input("dropdown_business_unities", "value"),
     Input("dropdown_offer_types", "value"),
     Input("dropdown_areas", "value"),
+    Input("dropdown_services", "value"),
 )
-def update_graph(business_unity, offer_type, area):
+def update_graph(business_unity, offer_type, area, service):
+
+    if service and offer_type:
+        dataset = dataset_plot_by_offer(offer_type=offer_type, service=service)
+        figure_line = px.line(dataset, x='Mes Registro', y=offer_type,
+                              title=f'Total registros {service} para {offer_type}: {dataset[offer_type].sum()} ')
+        figure_line.update_layout(
+            xaxis={
+                'tickmode': 'array',
+                'tickvals': [i for i in range(1, 13)],
+                'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+            title_font={
+                "family": "Mitr, sans-serif",
+                "size": 18,
+                "color": "#c0d507"},
+            font={
+                "family": "Mitr, sans-serif",
+                "size": 14,
+                "color": "#202124"},
+            plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
+
+        return figure_line
 
     if area and offer_type:
         dataset = dataset_plot_by_offer(offer_type=offer_type, area=area)
         figure_line = px.line(dataset, x='Mes Registro', y=offer_type,
                               title=f'Total registros {area} para {offer_type}: {dataset[offer_type].sum()} ')
+        figure_line.update_layout(xaxis={'tickmode': 'array',
+                                         'tickvals': [i for i in range(1, 13)],
+                                         'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+                                  title_font={
+                                      "family": "Mitr, sans-serif", "size": 18, "color": "#c0d507"},
+                                  font={"family": "Mitr, sans-serif",
+                                        "size": 14, "color": "#202124"},
+                                  plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
         return figure_line
 
     if business_unity and offer_type:
@@ -184,24 +215,77 @@ def update_graph(business_unity, offer_type, area):
             offer_type=offer_type, business_unity=business_unity)
         figure_line = px.line(dataset, x='Mes Registro', y=offer_type,
                               title=f'Total registros {business_unity.title()} para {offer_type}: {dataset[offer_type].sum()}')
+        figure_line.update_layout(xaxis={'tickmode': 'array',
+                                         'tickvals': [i for i in range(1, 13)],
+                                         'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+                                  title_font={
+                                      "family": "Mitr, sans-serif", "size": 18, "color": "#c0d507"},
+                                  font={"family": "Mitr, sans-serif",
+                                        "size": 14, "color": "#202124"},
+                                  plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
+
+        return figure_line
+
+    if service and not offer_type:
+        dataset = dataset_plot(service=service)
+        figure_line = px.line(dataset, x="Mes Registro", y=service,
+                              title=f'Total registros {service.title()}: {dataset[service].sum()} ')
+        figure_line.update_layout(xaxis={'tickmode': 'array',
+                                         'tickvals': [i for i in range(1, 13)],
+                                         'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+                                  title_font={
+            "family": "Mitr, sans-serif", "size": 18, "color": "#c0d507"},
+            font={"family": "Mitr, sans-serif",
+                  "size": 14, "color": "#202124"},
+            plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
+
         return figure_line
 
     if area and not offer_type:
         dataset = dataset_plot(area=area)
         figure_line = px.line(dataset, x="Mes Registro", y=area,
                               title=f'Total registros {area.title()}: {dataset[area].sum()} ')
+        figure_line.update_layout(xaxis={'tickmode': 'array',
+                                         'tickvals': [i for i in range(1, 13)],
+                                         'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+                                  title_font={
+            "family": "Mitr, sans-serif", "size": 18, "color": "#c0d507"},
+            font={"family": "Mitr, sans-serif",
+                  "size": 14, "color": "#202124"},
+            plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
+
         return figure_line
 
     if business_unity and not offer_type:
         dataset = dataset_plot(business_unity=business_unity)
         figure_line = px.line(dataset, x="Mes Registro", y=business_unity,
                               title=f'Total registros {business_unity.title()}: {dataset[business_unity].sum()}', labels={business_unity: "Cantidad de matrículas"})
+
+        figure_line.update_layout(
+            xaxis={
+                'tickmode': 'array',
+                'tickvals': [i for i in range(1, 13)],
+                'ticktext': ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]},
+            title_font={
+                "family": "Mitr, sans-serif",
+                "size": 18,
+                "color": "#c0d507"},
+            font={
+                "family": "Mitr, sans-serif",
+                "size": 14,
+                "color": "#202124"},
+            plot_bgcolor="#f9f9f9")
+        figure_line.update_traces(line_color="#005744")
+
         return figure_line
 
     dataset = df.groupby('Mes Registro', axis=0).count()[
         'Evento'].reset_index()
     figure_line = px.line(
-        dataset, x="Mes Registro", y='Evento', title=f'Total registros: {df["Evento"].shape[0]}', labels={'Evento': "Cantidad de matrículas"})
+        dataset, x="Mes Registro", y='Evento', title=f'Total registros: {df["Evento"].shape[0]}', labels={'Evento': "Cantidad de matrículas"},)
 
     figure_line.update_layout(
         xaxis={
@@ -216,11 +300,13 @@ def update_graph(business_unity, offer_type, area):
             "family": "Mitr, sans-serif",
             "size": 14,
             "color": "#202124"},
-        plot_bgcolor="#fcfcfc",
-        colorway=["#005644", "#ff7f0e"],
+        plot_bgcolor="#f9f9f9",
+
+        # tracecolor='rgb(204, 204, 204)',
 
     )
 
+    figure_line.update_traces(line_color="#005744")
 
     return figure_line
 
