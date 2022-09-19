@@ -63,6 +63,11 @@ app.layout = dbc.Container(
                                 ],
                             ),
                         ),
+
+                    ], class_name='col-4'
+                ),
+                dbc.Col([
+                    dbc.([
                         dcc.Dropdown(
                             options=[
                                 {"label": business_unity.title(),
@@ -94,11 +99,9 @@ app.layout = dbc.Container(
                             options=[],
                             id="dropdown_offer_types",
                             placeholder="Seleccione tipo oferta...",
-                        ),
-                    ], class_name='col-4'
-                ),
-                dbc.Col(
-                    [dcc.Graph(id="enroll-evolution", figure={})],
+                        )
+                    ]),
+                    dcc.Graph(id="enroll-evolution", figure={})],
                     class_name="border border-1 rounded shadow col-8",
                 ),
             ],
